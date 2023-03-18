@@ -7,9 +7,11 @@ def main():
 
     # Upload image
     st.subheader('Upload Image')
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns([2,1,1])
     with col1: uploaded_file = st.file_uploader('Choose an image...', type=['jpg', 'jpeg', 'png'])
     with col2: to_hsv = st.checkbox('Convert to HSV')
+    with col3: bitwise_and = st.checkbox('Intersection')
+
     col1, col2, col3, col4 = st.columns(4)
     if uploaded_file is not None:
         # Read image
@@ -34,7 +36,15 @@ def main():
         height, width = img.shape[:2]
         rotation_matrix = cv2.getRotationMatrix2D((width/2, height/2), angle, 1)
         adjusted = cv2.warpAffine(adjusted, rotation_matrix, (width, height))
-   
+        thresholded = cv2.warpAffine(thresholded, rotation_matrix, (width, height))
+
+        if bitwise_and: 
+            b,g,r = cv2.split(adjusted)
+            b = cv2.bitwise_and(b, thresholded)
+            g = cv2.bitwise_and(g, thresholded)
+            r = cv2.bitwise_and(r, thresholded)
+            adjusted  = cv2.merge((b,g,r))
+
         col1, col2, col3 = st.columns(3)
         with col1:
             st.subheader('Original Image')
