@@ -1,32 +1,34 @@
 import random
-import math
+random.seed(123)
 # Define the number of machines to simulate
 num_machines = 10
 
-# Define the initial MTBF value for each machine
-mtbf_values = [500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400]
+# Define the number of data points to generate for each machine
+num_data_points = 100
 
-# Define the threshold for detecting a defective machine
-defective_threshold = 650
+# Define the range of MTBF values for the machines in hours
+min_mtbf = 500
+max_mtbf = 2000
 
-# Simulate the performance of each machine
+# Generate the data for each machine
+machine_data = []
+machine_mtbf = []
+
 for i in range(num_machines):
-    # Generate a random number between 0 and 1
-    r = random.uniform(0, 1)
-    # Calculate the time until the next failure based on the MTBF value
-    time_until_failure = -mtbf_values[i] * math.log(1 - r)
-    # Print the time until the next failure for each machine
-    print("Machine {}: Time until next failure = {:.2f}".format(i+1, time_until_failure))
-    # Update the MTBF value for the machine based on the time until the next failure
-    mtbf_values[i] = (mtbf_values[i] + time_until_failure) / 2.0
+    mtbf = random.randint(min_mtbf, max_mtbf)
+    machine_mtbf.append(mtbf)
+    data = [random.expovariate(1/mtbf) for j in range(num_data_points)]
+    machine_data.append(data)
 
-# Find the machine with the lowest MTBF value
-worst_machine_index = mtbf_values.index(min(mtbf_values))
-# Print the index and MTBF value of the worst performing machine
-print("Worst performing machine: Index = {}, MTBF = {:.2f}".format(worst_machine_index+1, mtbf_values[worst_machine_index]))
+# Calculate the mean MTBF for each machine
+mean_mtbf = [sum(data)/len(data) for data in machine_data]
 
-# Check if any machine has a defective MTBF value
-if any(mtbf_value < defective_threshold for mtbf_value in mtbf_values):
-    print("Defective machine detected!")
-else:
-    print("All machines are performing well.")
+# Determine the index of the machine with the lowest mean MTBF
+worst_machine_index = mean_mtbf.index(min(mean_mtbf))
+
+# Print the results
+print("Machine performance data:")
+for i in range(num_machines):
+    _ = f'Machine {i+1}, Random MTBF: {machine_mtbf[i]}, Real MTBF: {round(mean_mtbf[i], 2)} hours'
+    print(_)
+print("Worst performing machine is machine", worst_machine_index+1)
