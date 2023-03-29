@@ -7,36 +7,49 @@ def main():
 
     # Upload image
     st.subheader('Upload Image')
-    col1, col2, col3 = st.columns([2,1,1])
+    col1, col2, col3, col4 = st.columns(4)
     with col1: uploaded_file = st.file_uploader('Choose an image...', type=['jpg', 'jpeg', 'png'])
-    with col2: 
-        col4, col5 = st.columns(2)
-        is_resize = col4.checkbox('Resized')
-        is_blur = col5.checkbox('Blur')
-        is_contours = col4.checkbox('Draw contours')
-        is_cf = col5.checkbox('Chanel flip')
-        is_vf = col4.checkbox('Vertical flip')
-        is_hf = col5.checkbox('Horizontal flip')
-        to_hsv = col4.checkbox('Convert to HSV')
-        bitwise_and = col5.checkbox('Intersection')
-        is_erode = col4.checkbox('Erode')   
-        is_dilate = col5.checkbox('Dilate')
+    with col2:
+        _col1, _col2 = st.columns(2)
+        is_vf = _col1.checkbox('Vertical flip')
+        is_hf = _col2.checkbox('Horizontal flip')
+        is_resize = _col1.checkbox('Resized')
+        is_cf = _col2.checkbox('Chanel flip')
+        if is_resize: 
+            _col1, _col2 = st.columns(2)
+            w_size = _col1.number_input("Width",value = 512, min_value=64,step = 32)
+            h_size = _col2.number_input("Height",value = 512, min_value=64,step = 32)
 
     with col3: 
-        if is_resize: 
-            col4, col5 = st.columns(2)
-            w_size = col4.number_input("Width",value = 512, min_value=64)
-            h_size = col5.number_input("Height",value = 512, min_value=64)
+        _col1, _col2 = st.columns(2)
+        is_blur = _col1.checkbox('Blur')
+        is_contours = _col2.checkbox('Draw contours')
+        to_hsv = _col1.checkbox('Convert to HSV')
+        bitwise_and = _col2.checkbox('Intersection')
+        is_erode = _col1.checkbox('Erode')   
+        is_dilate = _col2.checkbox('Dilate')
+
+    with col4: 
         if is_blur or is_erode or is_dilate:
-            kernel_size = st.slider('Kernel size', 1, 25, 5)
+            kernel_size = st.slider('Kernel size', 0, 10, 5)
             kernel_size *= 2
             kernel_size -= 1
-        if is_erode: 
+            kernel_size = max(1,kernel_size)
+            kernel = np.ones([kernel_size,kernel_size])
+        if is_erode or is_dilate: 
             col4, col5 = st.columns(2)
-            erode_iter =  col4.slider('Erode iteration', 1, 20, 5)
-            dilate_iter =  col5.slider('Dilate iteration', 1, 20, 5)
-
+            erode_iter =  col4.slider('Erode iteration', 0, 10, 1)
+            dilate_iter =  col5.slider('Dilate iteration', 0, 10, 1)
+    
     col1, col2, col3, col4 = st.columns(4)
+    # Brightness and contrast adjustment
+    with col1: brightness_value = st.slider('Brightness', min_value=-255, max_value=255, value=0)
+    with col2: contrast_value = st.slider('Contrast', min_value=-127, max_value=127, value=0)
+    # Rotation
+    with col3: angle = st.slider('Rotation Angle', min_value=-180, max_value=180, value=0)
+    # Thresholding
+    with col4: threshold_value = st.slider('Threshold Value', min_value=0, max_value=255, value=127)
+   
     if uploaded_file is not None:
         # Read image
         file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
@@ -46,13 +59,6 @@ def main():
         if is_hf: img = np.flip(img,axis = 1)
         if is_cf: img = np.flip(img,axis = 2)
 
-        # Brightness and contrast adjustment
-        with col1: brightness_value = st.slider('Brightness', min_value=-255, max_value=255, value=0)
-        with col2: contrast_value = st.slider('Contrast', min_value=-127, max_value=127, value=0)
-         # Rotation
-        with col3: angle = st.slider('Rotation Angle', min_value=-180, max_value=180, value=0)
-        # Thresholding
-        with col4: threshold_value = st.slider('Threshold Value', min_value=0, max_value=255, value=127)
         # Convert to HSV
         if to_hsv: img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         # Convert to grayscale
@@ -60,13 +66,12 @@ def main():
         _, thresholded = cv2.threshold(gray, threshold_value, 255, cv2.THRESH_BINARY)
         
         if is_erode: 
-            thresholded = cv2.erode(thresholded,  (kernel_size, kernel_size), iterations = erode_iter)
+            thresholded = cv2.erode(thresholded,  kernel, iterations = erode_iter)
         if is_dilate: 
-            thresholded = cv2.dilate(thresholded,  (kernel_size, kernel_size), iterations = dilate_iter)
+            thresholded = cv2.dilate(thresholded,  kernel, iterations = dilate_iter)
         # Draw the contours on the image
         adjusted = cv2.convertScaleAbs(img, alpha=1 + contrast_value/127.0, beta=brightness_value)
 
-        
         height, width = img.shape[:2]
         rotation_matrix = cv2.getRotationMatrix2D((width/2, height/2), angle, 1)
         adjusted = cv2.warpAffine(adjusted, rotation_matrix, (width, height))
