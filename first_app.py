@@ -19,14 +19,22 @@ def main():
         is_hf = col5.checkbox('Horizontal flip')
         to_hsv = col4.checkbox('Convert to HSV')
         bitwise_and = col5.checkbox('Intersection')
+        is_erode = col4.checkbox('Erode')   
+        is_dilate = col5.checkbox('Dilate')
+
     with col3: 
         if is_resize: 
             col4, col5 = st.columns(2)
             w_size = col4.number_input("Width",value = 512, min_value=64)
             h_size = col5.number_input("Height",value = 512, min_value=64)
-        if is_blur:
+        if is_blur or is_erode or is_dilate:
             kernel_size = st.slider('Kernel size', 1, 25, 5)
-
+            kernel_size *= 2
+            kernel_size -= 1
+        if is_erode: 
+            col4, col5 = st.columns(2)
+            erode_iter =  col4.slider('Erode iteration', 1, 20, 5)
+            dilate_iter =  col5.slider('Dilate iteration', 1, 20, 5)
 
     col1, col2, col3, col4 = st.columns(4)
     if uploaded_file is not None:
@@ -51,6 +59,10 @@ def main():
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         _, thresholded = cv2.threshold(gray, threshold_value, 255, cv2.THRESH_BINARY)
         
+        if is_erode: 
+            thresholded = cv2.erode(thresholded,  (kernel_size, kernel_size), iterations = erode_iter)
+        if is_dilate: 
+            thresholded = cv2.dilate(thresholded,  (kernel_size, kernel_size), iterations = dilate_iter)
         # Draw the contours on the image
         adjusted = cv2.convertScaleAbs(img, alpha=1 + contrast_value/127.0, beta=brightness_value)
 
@@ -61,10 +73,7 @@ def main():
         thresholded = cv2.warpAffine(thresholded, rotation_matrix, (width, height))
 
         # Apply Gaussian Blur
-        if is_blur:
-            kernel_size *= 2
-            kernel_size -= 1
-            adjusted = cv2.GaussianBlur(adjusted, (kernel_size, kernel_size), 0)
+        if is_blur: adjusted = cv2.GaussianBlur(adjusted, (kernel_size, kernel_size), 0)
         # Find the contours
         if is_contours:
             contours, _ = cv2.findContours(thresholded, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
