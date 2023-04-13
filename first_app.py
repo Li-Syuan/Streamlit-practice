@@ -26,20 +26,16 @@ def main():
         is_contours = _col2.checkbox('Draw contours')
         to_hsv = _col1.checkbox('Convert to HSV')
         bitwise_and = _col2.checkbox('Intersection')
-        is_erode = _col1.checkbox('Erode')   
-        is_dilate = _col2.checkbox('Dilate')
 
-    with col4: 
-        if is_blur or is_erode or is_dilate:
-            kernel_size = st.slider('Kernel size', 0, 10, 5)
-            kernel_size *= 2
-            kernel_size -= 1
-            kernel_size = max(1,kernel_size)
-            kernel = np.ones([kernel_size,kernel_size])
-        if is_erode or is_dilate: 
-            col4, col5 = st.columns(2)
-            erode_iter =  col4.slider('Erode iteration', 0, 10, 1)
-            dilate_iter =  col5.slider('Dilate iteration', 0, 10, 1)
+    with col4:  
+        kernel_size = st.slider('Kernel size', 0, 10, 5)
+        kernel_size *= 2
+        kernel_size -= 1
+        kernel_size = max(1,kernel_size)
+        kernel = np.ones([kernel_size,kernel_size])
+        col4, col5 = st.columns(2)
+        erode_iter =  col4.slider('Erode iteration', 0, 10, 1)
+        dilate_iter =  col5.slider('Dilate iteration', 0, 10, 1)
     
     col1, col2, col3, col4 = st.columns(4)
     # Brightness and contrast adjustment
@@ -64,11 +60,8 @@ def main():
         # Convert to grayscale
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         _, thresholded = cv2.threshold(gray, threshold_value, 255, cv2.THRESH_BINARY)
-        
-        if is_erode: 
-            thresholded = cv2.erode(thresholded,  kernel, iterations = erode_iter)
-        if is_dilate: 
-            thresholded = cv2.dilate(thresholded,  kernel, iterations = dilate_iter)
+        thresholded = cv2.erode(thresholded,  kernel, iterations = erode_iter)
+        thresholded = cv2.dilate(thresholded,  kernel, iterations = dilate_iter)
         # Draw the contours on the image
         adjusted = cv2.convertScaleAbs(img, alpha=1 + contrast_value/127.0, beta=brightness_value)
 
