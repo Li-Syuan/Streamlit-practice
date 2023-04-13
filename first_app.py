@@ -3,8 +3,8 @@ import cv2
 import numpy as np
 st.set_page_config(layout='wide') # Set Streamlit to wide mode
 def main():
-    st.title('Image Thresholding and Adjustment Demo')
-
+    st.title('Image Thresholding and Adjustment')
+    
     # Upload image
     st.subheader('Upload Image')
     col1, col2, col3, col4 = st.columns(4)
