@@ -1,14 +1,28 @@
 import streamlit as st
 import cv2
 import numpy as np
+from streamlit_cropper import st_cropper
+from PIL import Image
 st.set_page_config(layout='wide') # Set Streamlit to wide mode
+
 def main():
     st.title('Image Thresholding and Adjustment')
 
     # Upload image
     st.subheader('Upload Image')
     col1, col2, col3, col4 = st.columns(4)
-    with col1: uploaded_file = st.file_uploader('Choose an image...', type=['jpg', 'jpeg', 'png'])
+    with col1: 
+        uploaded_file = st.file_uploader('Choose an image...', type=['jpg', 'jpeg', 'png'])
+        box_color = st.sidebar.color_picker(label="Box Color", value='#0000FF')
+        aspect_choice = st.sidebar.radio(label="Aspect Ratio", options=["1:1", "16:9", "4:3", "2:3", "Free"])
+        aspect_dict = {
+            "1:1": (1, 1),
+            "16:9": (16, 9),
+            "4:3": (4, 3),
+            "2:3": (2, 3),
+            "Free": None
+        }
+        aspect_ratio = aspect_dict[aspect_choice]
     with col2:
         _col1, _col2 = st.columns(2)
         is_vf = _col1.checkbox('Vertical flip')
@@ -48,31 +62,36 @@ def main():
    
     if uploaded_file is not None:
         # Read image
-        file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
-        img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+        # file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
+        # cropped_img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
 
-        h,w,_ = img.shape
-        col1, col2= st.columns(2)
-        with col1: height_1,height_2 = st.slider('Height Range',value= (0,h))
-        with col2: wideth_1,wideth_2 = st.slider('Wide Range',value=(0,w))
-        img = img[height_1:height_2,wideth_1:wideth_2]
+        img = Image.open(uploaded_file)
+        _,_col,_ = st.columns([4,8,2])
+        with _col: cropped_img = st_cropper(img, box_color=box_color,aspect_ratio=aspect_ratio)
+        cropped_img = np.asarray(cropped_img)
+        if len(cropped_img.shape) == 2:
+            cropped_img = np.expand_dims(cropped_img, axis=-1)[:,:,[0] * 3]
+        else:
+            cropped_img = cropped_img[:,:,[2,1,0]]
 
-        if is_resize: img = cv2.resize(img,(w_size,h_size))
-        if is_vf: img = np.flip(img,axis = 0)
-        if is_hf: img = np.flip(img,axis = 1)
-        if is_cf: img = np.flip(img,axis = 2)
+        if is_resize: cropped_img = cv2.resize(cropped_img,(w_size,h_size))
+        if is_vf: cropped_img = np.flip(cropped_img,axis = 0)
+        if is_hf: cropped_img = np.flip(cropped_img,axis = 1)
+        if is_cf: cropped_img = np.flip(cropped_img,axis = 2)
 
         # Convert to HSV
-        if to_hsv: img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        if to_hsv: cropped_img = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2HSV)
         # Convert to grayscale
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    
+        
+        gray = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
         _, thresholded = cv2.threshold(gray, threshold_value, 255, cv2.THRESH_BINARY)
         thresholded = cv2.erode(thresholded,  kernel, iterations = erode_iter)
         thresholded = cv2.dilate(thresholded,  kernel, iterations = dilate_iter)
         # Draw the contours on the image
-        adjusted = cv2.convertScaleAbs(img, alpha=1 + contrast_value/127.0, beta=brightness_value)
+        adjusted = cv2.convertScaleAbs(cropped_img, alpha=1 + contrast_value/127.0, beta=brightness_value)
 
-        height, width = img.shape[:2]
+        height, width = cropped_img.shape[:2]
         rotation_matrix = cv2.getRotationMatrix2D((width/2, height/2), angle, 1)
         adjusted = cv2.warpAffine(adjusted, rotation_matrix, (width, height))
         thresholded = cv2.warpAffine(thresholded, rotation_matrix, (width, height))
@@ -94,7 +113,7 @@ def main():
         col1, col2, col3 = st.columns(3)
         with col1:
             st.subheader('Original Image')
-            st.image(img, channels='BGR')
+            st.image(cropped_img, channels='BGR')
         with col2:
             st.subheader('Adjusted Image')
             st.image(adjusted, channels='BGR')
