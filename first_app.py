@@ -4,7 +4,7 @@ import numpy as np
 st.set_page_config(layout='wide') # Set Streamlit to wide mode
 def main():
     st.title('Image Thresholding and Adjustment')
-    
+
     # Upload image
     st.subheader('Upload Image')
     col1, col2, col3, col4 = st.columns(4)
@@ -50,6 +50,13 @@ def main():
         # Read image
         file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
         img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+
+        h,w,_ = img.shape
+        col1, col2= st.columns(2)
+        with col1: height_1,height_2 = st.slider('Height Range',value= (0,h))
+        with col2: wideth_1,wideth_2 = st.slider('Wide Range',value=(0,w))
+        img = img[height_1:height_2,wideth_1:wideth_2]
+
         if is_resize: img = cv2.resize(img,(w_size,h_size))
         if is_vf: img = np.flip(img,axis = 0)
         if is_hf: img = np.flip(img,axis = 1)
