@@ -2,3 +2,4 @@ opencv-python-headless==4.7.0.68
 streamlit==1.20.0
 numpy==1.22.3
 pandas==1.4.2
+streamlit-cropper
