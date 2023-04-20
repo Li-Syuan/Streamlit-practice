@@ -56,13 +56,20 @@ def main():
    
     if uploaded_file is not None:
         # Read image
-        # file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
-        # cropped_img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-
         img = Image.open(uploaded_file)
-        _,_col,_ = st.columns([4,8,2])
-        with _col: cropped_img = st_cropper(img, box_color=box_color,aspect_ratio=aspect_ratio)
-        cropped_img = np.asarray(cropped_img)
+        _loc,_col,_ = st.columns([5,8,2])
+        
+        with _col:
+            rect = st_cropper(
+                img_file=img,
+                box_color=box_color,
+                aspect_ratio=aspect_ratio,
+                return_type='box')
+        left, top, width, height = tuple(map(int, rect.values()))
+        img= np.asarray(img).astype('uint8')
+        cropped_img = img[top:top + height, left:left + width]
+        with _loc: st.write(rect)
+        
         if len(cropped_img.shape) == 2:
             cropped_img = np.expand_dims(cropped_img, axis=-1)[:,:,[0] * 3]
         else:
