@@ -13,15 +13,9 @@ def main():
     col1, col2, col3, col4 = st.columns(4)
     with col1: 
         uploaded_file = st.file_uploader('Choose an image...', type=['jpg', 'jpeg', 'png'])
-        box_color = st.sidebar.color_picker(label="Box Color", value='#0000FF')
-        aspect_choice = st.sidebar.radio(label="Aspect Ratio", options=["1:1", "16:9", "4:3", "2:3", "Free"])
-        aspect_dict = {
-            "1:1": (1, 1),
-            "16:9": (16, 9),
-            "4:3": (4, 3),
-            "2:3": (2, 3),
-            "Free": None
-        }
+        box_color = st.color_picker(label="Box Color", value='#0000FF')
+        aspect_choice = st.radio(label="Aspect Ratio", options=["1:1", "16:9", "4:3", "2:3", "Free"])
+        aspect_dict = {"1:1": (1, 1),"16:9": (16, 9), "4:3": (4, 3),"2:3": (2, 3),"Free": None}
         aspect_ratio = aspect_dict[aspect_choice]
     with col2:
         _col1, _col2 = st.columns(2)
@@ -54,7 +48,7 @@ def main():
     col1, col2, col3, col4 = st.columns(4)
     # Brightness and contrast adjustment
     with col1: brightness_value = st.slider('Brightness', min_value=-255, max_value=255, value=0)
-    with col2: contrast_value = st.slider('Contrast', min_value=-127, max_value=127, value=0)
+    with col2: contrast_value = st.slider('Contrast', min_value=-255, max_value=255, value=0)
     # Rotation
     with col3: angle = st.slider('Rotation Angle', min_value=-180, max_value=180, value=0)
     # Thresholding
